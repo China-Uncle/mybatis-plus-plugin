@@ -10,6 +10,8 @@ import com.baomidou.mybatisplus.generator.config.*;
 import com.baomidou.mybatisplus.generator.config.po.TableField;
 import com.baomidou.mybatisplus.generator.config.po.TableFill;
 import com.baomidou.mybatisplus.generator.config.po.TableInfo;
+import com.baomidou.mybatisplus.generator.config.rules.DbColumnType;
+import com.baomidou.mybatisplus.generator.config.rules.IColumnType;
 import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
 import com.baomidou.plugin.idea.mybatisx.codegenerator.MyFreemarkerTemplateEngine;
 import com.baomidou.plugin.idea.mybatisx.codegenerator.MysqlUtil;
@@ -120,6 +122,67 @@ public class GenUtil {
         // 数据源配置
         DataSourceConfig dsc = new DataSourceConfig();
         dsc.setUrl(MysqlUtil.getInstance().getDbUrl());
+        dsc.setTypeConvert(new ITypeConvert() {
+            @Override
+            public IColumnType processTypeConvert(GlobalConfig globalConfig, String fieldType) {
+                String t = fieldType.toLowerCase();
+                if (t.contains("char")) {
+                    return DbColumnType.STRING;
+                } else if (t.contains("bigint")) {
+                    return DbColumnType.LONG;
+                } else if (t.contains("tinyint(1)")) {
+                    return DbColumnType.INTEGER;
+                } else if (t.contains("int")) {
+                    return DbColumnType.INTEGER;
+                } else if (t.contains("text")) {
+                    return DbColumnType.STRING;
+                } else if (t.contains("bit")) {
+                    return DbColumnType.BOOLEAN;
+                } else if (t.contains("decimal")) {
+                    return DbColumnType.BIG_DECIMAL;
+                } else if (t.contains("clob")) {
+                    return DbColumnType.CLOB;
+                } else if (t.contains("blob")) {
+                    return DbColumnType.BLOB;
+                } else if (t.contains("binary")) {
+                    return DbColumnType.BYTE_ARRAY;
+                } else if (t.contains("float")) {
+                    return DbColumnType.FLOAT;
+                } else if (t.contains("double")) {
+                    return DbColumnType.DOUBLE;
+                } else if (t.contains("json") || t.contains("enum")) {
+                    return DbColumnType.STRING;
+                } else if (t.contains("date") || t.contains("time") || t.contains("year")) {
+                    switch (globalConfig.getDateType()) {
+                        case ONLY_DATE:
+                            return DbColumnType.DATE;
+                        case SQL_PACK:
+                            switch (t) {
+                                case "date":
+                                    return DbColumnType.DATE_SQL;
+                                case "time":
+                                    return DbColumnType.TIME;
+                                case "year":
+                                    return DbColumnType.DATE_SQL;
+                                default:
+                                    return DbColumnType.TIMESTAMP;
+                            }
+                        case TIME_PACK:
+                            switch (t) {
+                                case "date":
+                                    return DbColumnType.LOCAL_DATE;
+                                case "time":
+                                    return DbColumnType.LOCAL_TIME;
+                                case "year":
+                                    return DbColumnType.YEAR;
+                                default:
+                                    return DbColumnType.LOCAL_DATE_TIME;
+                            }
+                    }
+                }
+                return DbColumnType.STRING;
+            }
+        });
 //         dsc.setSchemaName("public");
         dsc.setDriverName(MysqlUtil.getInstance().getJdbcDriver());
         dsc.setUsername(MysqlUtil.getInstance().getUsername());
